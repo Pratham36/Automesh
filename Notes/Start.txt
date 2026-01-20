@@ -1,0 +1,5 @@
+npm run dev (For Main app)
+
+npx inngest-cli@1.12.1 dev (For inngest)
+
+npx prisma studio (for prisma studio)
