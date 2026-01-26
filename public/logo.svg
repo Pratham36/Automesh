@@ -1,1 +1,50 @@
-<svg id="logo-38" width="78" height="32" viewBox="0 0 78 32" fill="none" xmlns="http://www.w3.org/2000/svg"> <path d="M55.5 0H77.5L58.5 32H36.5L55.5 0Z" class="ccustom" fill="#FF7A00"></path> <path d="M35.5 0H51.5L32.5 32H16.5L35.5 0Z" class="ccompli1" fill="#FF9736"></path> <path d="M19.5 0H31.5L12.5 32H0.5L19.5 0Z" class="ccompli2" fill="#FFBC7D"></path> </svg>
+<!-- <svg
+  id="automesh-logo"
+  width="78"
+  height="32"
+  viewBox="0 0 78 32"
+  fill="none"
+  xmlns="http://www.w3.org/2000/svg"
+>
+  <path
+    d="M55.5 0H77.5L58.5 32H36.5L55.5 0Z"
+    fill="#6D5BFF"
+  />
+
+  <path
+    d="M35.5 0H51.5L32.5 32H16.5L35.5 0Z"
+    fill="#4F7CFF"
+  />
+
+  <path
+    d="M19.5 0H31.5L12.5 32H0.5L19.5 0Z"
+    fill="#00CFEA"
+  />
+
+  <path
+    d="M35.5 0L16.5 32"
+    stroke="rgba(255,255,255,0.12)"
+    stroke-width="1"
+  />
+</svg> -->
+
+
+<svg
+  data-logo="automesh-icon"
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 48 34"
+>
+  <g id="logogram">
+    <!-- Left Pipeline -->
+    <path
+      d="M15.4992 0H36.5808L21.0816 22.9729H0L15.4992 0Z"
+      fill="#007AFF"
+    />
+
+    <!-- Right Pipeline -->
+    <path
+      d="M16.4224 25.102L10.4192 34H32.5008L48 11.0271H31.7024L22.2064 25.102H16.4224Z"
+      fill="#312ECB"
+    />
+  </g>
+</svg>
