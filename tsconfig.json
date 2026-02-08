@@ -19,8 +19,10 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"]
-    }
+      "@/*": ["./src/*"],
+      "@generated/prisma": ["src/generated/prisma"]
+    },
+    "baseUrl": "."
   },
   "include": [
     "next-env.d.ts",
