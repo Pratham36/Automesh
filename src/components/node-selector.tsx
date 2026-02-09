@@ -110,7 +110,7 @@ export function NodeSelector({
                         return (
                             <div
                                 key={NodeType.type}
-                                className="w-full justify-start h-auto py-5 px-4rounded-none cursor-pointer border-l-2 border-transparent hover:border-l-primary"
+                                className="w-full justify-start h-auto py-5 px-4 rounded-none cursor-pointer border-l-2 border-transparent hover:border-l-primary"
                                 onClick={() => { handleNodeSelect(NodeType) }}
                             >
                                 <div className="flex items-center gap-6 w-full overflow-hidden">
@@ -139,7 +139,7 @@ export function NodeSelector({
                         return (
                             <div
                                 key={NodeType.type}
-                                className="w-full justify-start h-auto py-5 px-4rounded-none cursor-pointer border-l-2 border-transparent hover:border-l-primary"
+                                className="w-full justify-start h-auto py-5 px-4 rounded-none cursor-pointer border-l-2 border-transparent hover:border-l-primary"
                                 onClick={() => { handleNodeSelect(NodeType) }}
                             >
                                 <div className="flex items-center gap-6 w-full overflow-hidden">
