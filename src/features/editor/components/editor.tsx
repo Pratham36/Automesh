@@ -1,95 +1,103 @@
 "use client";
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from "react";
 import {
-    ReactFlow,
-    applyNodeChanges,
-    applyEdgeChanges,
-    addEdge,
-    type Node,
-    type Edge,
-    type NodeChange,
-    type EdgeChange,
-    type Connection,
-    Background,
-    Controls,
-    MiniMap,
-    Panel
-} from '@xyflow/react';
-import '@xyflow/react/dist/style.css';
+  ReactFlow,
+  applyNodeChanges,
+  applyEdgeChanges,
+  addEdge,
+  type Node,
+  type Edge,
+  type NodeChange,
+  type EdgeChange,
+  type Connection,
+  Background,
+  Controls,
+  MiniMap,
+  Panel,
+} from "@xyflow/react";
+import "@xyflow/react/dist/style.css";
 import { ErrorView, LoadingView } from "@/components/entity-components";
 import { useSuspenseWorkflow } from "@/features/workflows/hooks/use-workflows";
-import { nodeComponents } from '@/config/node-components';
-import { AddNodeButton } from './add-node-button';
-import { useSetAtom } from 'jotai';
-import { editorAtom } from '../store/atoms';
+import { nodeComponents } from "@/config/node-components";
+import { AddNodeButton } from "./add-node-button";
+import { useSetAtom } from "jotai";
+import { editorAtom } from "../store/atoms";
+import { NodeType } from "@/generated/prisma";
+import { ExecuteWorkflowButton } from "./execute-workflow-button";
 
 export const EditorLoading = () => {
-    return (
-        <LoadingView message="Loading editor..." />
-    );
-}
-
-export const EditorError = () => {
-    return (
-        <ErrorView message="Failed to load editor" />
-    );
+  return <LoadingView message="Loading editor..." />;
 };
 
-const initialEdges = [
-    { id: 'n1-n2', source: 'n1', target: 'n2' }
-];
+export const EditorError = () => {
+  return <ErrorView message="Failed to load editor" />;
+};
+
+const initialEdges = [{ id: "n1-n2", source: "n1", target: "n2" }];
 
 export const Editor = ({ workflowId }: { workflowId: string }) => {
-    const { data: workflow } = useSuspenseWorkflow(workflowId);
+  const { data: workflow } = useSuspenseWorkflow(workflowId);
 
-    const setEditor = useSetAtom(editorAtom);
+  const setEditor = useSetAtom(editorAtom);
 
-    const [nodes, setNodes] = useState<Node[]>(workflow.nodes);
-    const [edges, setEdges] = useState<Edge[]>(workflow.edges);
+  const [nodes, setNodes] = useState<Node[]>(workflow.nodes);
+  const [edges, setEdges] = useState<Edge[]>(workflow.edges);
 
-    const onNodesChange = useCallback(
-        (changes: NodeChange[]) => setNodes((nodesSnapshot) => applyNodeChanges(changes, nodesSnapshot)),
-        [],
-    );
-    const onEdgesChange = useCallback(
-        (changes: EdgeChange[]) => setEdges((edgesSnapshot) => applyEdgeChanges(changes, edgesSnapshot)),
-        [],
-    );
-    const onConnect = useCallback(
-        (params: Connection) => setEdges((edgesSnapshot) => addEdge(params, edgesSnapshot)),
-        [],
-    );
+  const onNodesChange = useCallback(
+    (changes: NodeChange[]) =>
+      setNodes((nodesSnapshot) => applyNodeChanges(changes, nodesSnapshot)),
+    [],
+  );
+  const onEdgesChange = useCallback(
+    (changes: EdgeChange[]) =>
+      setEdges((edgesSnapshot) => applyEdgeChanges(changes, edgesSnapshot)),
+    [],
+  );
+  const onConnect = useCallback(
+    (params: Connection) =>
+      setEdges((edgesSnapshot) => addEdge(params, edgesSnapshot)),
+    [],
+  );
 
-    return (
-        <div className='size-full'>
-            <ReactFlow
-                nodes={nodes}
-                edges={edges}
-                onNodesChange={onNodesChange}
-                onEdgesChange={onEdgesChange}
-                onConnect={onConnect}
-                nodeTypes={nodeComponents}
-                onInit={setEditor}
-                fitView
-                proOptions={{
-                    hideAttribution: true,
-                }}
-                snapGrid={[10, 10]}
-                snapToGrid
-                panOnScroll
-                panOnDrag={true}
-                selectionOnDrag={false}
-                selectionKeyCode="Control"
-                multiSelectionKeyCode="Control"
-            >
-                <Background />
-                <Controls />
-                <MiniMap />
-                <Panel position="top-right">
-                    <AddNodeButton />
-                </Panel>
-            </ReactFlow>
-        </div>
-    )
+  const hasManualTrigger = useMemo(() => {
+    return nodes.some((node) => node.type === NodeType.MANUAL_TRIGGER);
+  }, [nodes]);
+
+  return (
+    <div className="size-full">
+      <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
+        onConnect={onConnect}
+        nodeTypes={nodeComponents}
+        onInit={setEditor}
+        fitView
+        proOptions={{
+          hideAttribution: true,
+        }}
+        snapGrid={[10, 10]}
+        snapToGrid
+        panOnScroll
+        panOnDrag={true}
+        selectionOnDrag={false}
+        selectionKeyCode="Control"
+        multiSelectionKeyCode="Control"
+      >
+        <Background />
+        <Controls />
+        <MiniMap />
+        <Panel position="top-right">
+          <AddNodeButton />
+        </Panel>
+        {hasManualTrigger && (
+          <Panel position="bottom-center">
+            <ExecuteWorkflowButton workflowId={workflowId} />
+          </Panel>
+        )}
+      </ReactFlow>
+    </div>
+  );
 };

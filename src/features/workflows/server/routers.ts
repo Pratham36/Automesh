@@ -9,8 +9,28 @@ import type { Node, Edge } from "@xyflow/react";
 import z from "zod";
 import { PAGINATION } from "@/config/constants";
 import { NodeType } from "@/generated/prisma";
+import { inngest } from "@/inngest/client";
 
 export const workflowsRouter = createTRPCRouter({
+  execute: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const workflow = await prisma.workflow.findUniqueOrThrow({
+        where: {
+          id: input.id,
+          userId: ctx.auth.user.id,
+        },
+      });
+
+      await inngest.send({
+        name: "workflows/execute.workflow",
+        data: {
+          workflowId: input.id,
+        },
+      });
+      return workflow;
+    }),
+
   create: premiumProcedure.mutation(({ ctx }) => {
     return prisma.workflow.create({
       data: {
@@ -26,6 +46,7 @@ export const workflowsRouter = createTRPCRouter({
       },
     });
   }),
+
   remove: protectedProcedure
     .input(z.object({ id: z.string() }))
     .mutation(({ ctx, input }) => {
@@ -80,12 +101,50 @@ export const workflowsRouter = createTRPCRouter({
             workflowId: id,
           },
         });
+
+        /**
+         * DEFAULT_NODE_NAMES
+         * ------------------
+         * Maps each NodeType to a human-readable default label.
+         *
+         * Purpose:
+         * - Avoid using technical IDs as node names
+         * - Provide meaningful labels on initial creation
+         * - Act as a safe fallback when user-defined names are missing
+         *
+         * IMPORTANT:
+         * - This is NOT the source of truth
+         * - Actual node names should come from DB / node.data.name
+         * - This is used ONLY as a fallback
+         */
+        const DEFAULT_NODE_NAMES: Record<NodeType, string> = {
+          INITIAL: "Start",
+          MANUAL_TRIGGER: "MANUAL_TRIGGER",
+          HTTP_REQUEST: "HTTP_REQUEST",
+        };
+
+        /**
+         * getDefaultNodeName
+         * ------------------
+         * Returns a default, human-readable node name based on node type.
+         *
+         * Used when:
+         * - Creating a new node
+         * - Restoring nodes from client state
+         * - node.data.name is missing or undefined
+         *
+         * Guarantees:
+         * - Never returns undefined
+         * - Prevents raw IDs from leaking into UI or DB
+         */
+        const getDefaultNodeName = (type?: string | null) =>
+          DEFAULT_NODE_NAMES[type as NodeType] ?? "Node";
         // Create new nodes and edges
         await tx.node.createMany({
           data: nodes.map((node) => ({
             id: node.id,
             workflowId: id,
-            name: node.id || "unknow",
+            name: DEFAULT_NODE_NAMES[node.type as NodeType],
             type: node.type as NodeType,
             position: node.position,
             data: node.data || {},

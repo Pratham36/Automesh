@@ -1,63 +1,54 @@
+import { NonRetriableError } from "inngest";
 import { inngest } from "./client";
-import { createGoogleGenerativeAI } from "@ai-sdk/google";
-import { generateText } from "ai";
-import { createOpenAI } from "@ai-sdk/openai";
-import { createAnthropic } from "@ai-sdk/anthropic";
-import * as Sentry from "@sentry/nextjs";
+import prisma from "@/lib/db";
+import { topologicalSort } from "./utils";
+import { NodeType } from "@/generated/prisma";
+import { getExecutor } from "@/features/lib/executor-registry";
 
-const google = createGoogleGenerativeAI();
-const openai = createOpenAI();
-const anthropic = createAnthropic();
-
-export const execute = inngest.createFunction(
-  { id: "execute-ai" },
-  { event: "execute/ai" },
+export const executeWorkflow = inngest.createFunction(
+  { id: "execute-workflow" },
+  { event: "workflows/execute.workflow" },
   async ({ event, step }) => {
-    await step.sleep("pretend", "5s");
+    const workflowId = event.data.workflowId;
 
-    // Sentry.logger.info('User triggered test log', { log_source: 'sentry_test' })
+    if (!workflowId) {
+      throw new NonRetriableError("Workflow ID is missing");
+    }
 
-    // console.warn("Somrthing went wrong");
-    // console.error("Error  found");
-
-    const { steps: geministeps } = await step.ai.wrap(
-      "gemini-generate-text",
-      generateText,
-      {
-        model: google("gemini-2.5-flash"),
-        system: "You are a Helpful assistant",
-        prompt: "What is 2 + 2 ",
-        experimental_telemetry: {
-          isEnabled: true,
-          recordInputs: true,
-          recordOutputs: true,
+    const sortedNode = await step.run("prepare-workflow", async () => {
+      const workflow = await prisma.workflow.findUniqueOrThrow({
+        where: {
+          id: workflowId,
         },
-      },
-    );
-    // const { steps : openaistep } = await step.ai.wrap("openai-generate-text",generateText,{
-    //   model: openai("gpt-4"),
-    //   system : "You are a Helpful assistant",
-    //   prompt : "What is 2 + 2 ",
-    //   experimental_telemetry: {
-    //     isEnabled: true,
-    //     recordInputs: true,
-    //     recordOutputs: true,
-    //   },
-    // })
-    // const { steps : anthropicstep } = await step.ai.wrap("anthropic-generate-text",generateText,{
-    //   model: anthropic("claude-sonnet-4-0"),
-    //   system : "You are a Helpful assistant",
-    //   prompt : "What is 2 + 2 ",
-    //   experimental_telemetry: {
-    //     isEnabled: true,
-    //     recordInputs: true,
-    //     recordOutputs: true,
-    //   },
-    // })
+        include: {
+          nodes: true,
+          connection: true,
+        },
+      });
+      return topologicalSort(workflow.nodes, workflow.connection);
+    });
+    //Initialize the context
+    let context = event.data.initialContext || {};
+
+    for (const node of sortedNode) {
+      try {
+        const executor = getExecutor(node.type as NodeType);
+        context = await executor({
+          data: node.data as Record<string, unknown>,
+          nodeId: node.id,
+          context,
+          step,
+        });
+      } catch (error) {
+        throw new NonRetriableError(
+          `Failed to execute node ${node.id} (${node.type}): ${error instanceof Error ? error.message : "Unknown error"}`,
+        );
+      }
+    }
+
     return {
-      geministeps,
-      // openaistep,
-      // anthropicstep
+      workflowId,
+      result: context,
     };
   },
 );
