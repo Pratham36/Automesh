@@ -2,19 +2,13 @@ import Handlebars from "handlebars";
 import { NodeExecutor } from "@/features/executions/types";
 import { NonRetriableError } from "inngest";
 import ky, { type Options as kyOptions } from "ky";
+import { httpRequestChannel } from "@/inngest/channels/https-request";
 
-// Local Handlebars instance to avoid global registration
-const createHandlebarsInstance = () => {
-  const hb = Handlebars.create();
-  hb.registerHelper("json", (context) => {
-    const jsonString = JSON.stringify(context, null, 2);
-    const safeString = new hb.SafeString(jsonString);
-    return safeString;
-  });
-  return hb;
-};
-
-const handlebars = createHandlebarsInstance();
+Handlebars.registerHelper("json", (context) => {
+  const jsonString = JSON.stringify(context, null, 2);
+  const safeString = new Handlebars.SafeString(jsonString);
+  return safeString;
+});
 
 type HttpRequestData = {
   variablesName: string;
@@ -28,47 +22,55 @@ export const httpRequestExecutor: NodeExecutor<HttpRequestData> = async ({
   nodeId,
   context,
   step,
+  publish,
 }) => {
+  await publish(
+    httpRequestChannel().status({
+      nodeId,
+      status: "loading",
+    }),
+  );
   if (!data.endpoint) {
+    await publish(
+      httpRequestChannel().status({
+        nodeId,
+        status: "error",
+      }),
+    );
     throw new NonRetriableError("Http Request node is not configured");
   }
   if (!data.variablesName) {
+    await publish(
+      httpRequestChannel().status({
+        nodeId,
+        status: "error",
+      }),
+    );
     throw new NonRetriableError("Variable Name is not configured");
   }
   if (!data.method) {
+    await publish(
+      httpRequestChannel().status({
+        nodeId,
+        status: "error",
+      }),
+    );
     throw new NonRetriableError("Method is not configured");
   }
 
-  const result = await step.run("http-request", async () => {
-    const endpoint = Handlebars.compile(data.endpoint)(context);
-    const method = data.method;
+  try {
+    const result = await step.run("http-request", async () => {
+      const endpoint = Handlebars.compile(data.endpoint)(context);
+      const method = data.method;
 
-    const options: kyOptions = {
-      method,
-      timeout: 30000, // 30 second timeout
-      retry: {
-        limit: 2,
-        statusCodes: [408, 429, 500, 502, 503, 504],
-      },
-    };
+      const options: kyOptions = { method };
 
-    if (["POST", "PUT", "PATCH"].includes(method)) {
-      const resolved = Handlebars.compile(data.body || "{}")(context);
-      let parsedBody;
-      try {
-        parsedBody = JSON.parse(resolved);
-      } catch (error) {
-        throw new NonRetriableError(
-          `Invalid JSON in request body: ${error instanceof Error ? error.message : "Unknown error"}`,
-        );
+      if (["POST", "PUT", "PATCH"].includes(method)) {
+        const resolved = Handlebars.compile(data.body || "{}")(context);
+        JSON.parse(resolved);
+        options.body = resolved;
+        options.headers = { "Content-Type": "application/json" };
       }
-      options.body = JSON.stringify(parsedBody);
-      options.headers = {
-        "Content-Type": "application/json",
-      };
-    }
-
-    try {
       const response = await ky(endpoint, options);
       const contentType = response.headers.get("content-type");
       const responseData = contentType?.includes("application/json")
@@ -86,38 +88,22 @@ export const httpRequestExecutor: NodeExecutor<HttpRequestData> = async ({
         ...context,
         [data.variablesName]: responsePayload,
       };
-    } catch (error: unknown) {
-      if (error && typeof error === "object" && "response" in error) {
-        const httpError = error as {
-          response: {
-            status: number;
-            statusText: string;
-            text?: () => Promise<string>;
-          };
-        };
-        const errorData = httpError.response.text
-          ? await httpError.response.text().catch(() => "Unknown error")
-          : "Unknown error";
-        throw new NonRetriableError(
-          `HTTP ${httpError.response.status}: ${httpError.response.statusText} - ${errorData}`,
-        );
-      }
-      throw new NonRetriableError(
-        `HTTP request failed: ${error instanceof Error ? error.message : "Unknown error"}`,
-      );
-    }
-  });
+    });
+    await publish(
+      httpRequestChannel().status({
+        nodeId,
+        status: "success",
+      }),
+    );
 
-  return result;
+    return result;
+  } catch (error) {
+    await publish(
+      httpRequestChannel().status({
+        nodeId,
+        status: "error",
+      }),
+    );
+    throw error;
+  }
 };
-
-// {
-//   "title": "foo",
-//   "body": "bar",
-//   "userId": 1
-// }
-// {
-//   "title": "userid-{{todo.httpResponse.data.userId}}",
-//   "body": "bar",
-//   "userId": 1
-// }
