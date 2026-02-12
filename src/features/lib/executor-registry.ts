@@ -3,17 +3,27 @@ import { NodeExecutor } from "../executions/types";
 import { manualTriggerExecutor } from "@/features/triggers/components/manual-trigger/executor";
 import { httpRequestExecutor } from "@/features/executions/components/http-request/executor";
 import { googleFormTriggerExecutor } from "../triggers/components/google-form-trigger/executor";
+import { stripeTriggerExecutor } from "../triggers/components/stripe-trigger/executor";
+import { geminiExecutor } from "../executions/components/gemini/executor";
+import { openAiExecutor } from "../executions/components/openai/executor";
+import { AnthropicExecutor } from "../executions/components/anthropic/executor";
+import { GroqExecutor } from "../executions/components/groq/executor";
 
 // Create a proper type-safe registry with type assertions
-const executorRegistry = new Map<NodeType, NodeExecutor>([
-  [NodeType.INITIAL, manualTriggerExecutor as NodeExecutor],
-  [NodeType.MANUAL_TRIGGER, manualTriggerExecutor as NodeExecutor],
-  [NodeType.HTTP_REQUEST, httpRequestExecutor as NodeExecutor],
-  [NodeType.GOOGLE_FORM_TRIGGER, googleFormTriggerExecutor as NodeExecutor],
-]);
+export const executorRegistry: Record<NodeType, NodeExecutor> = {
+  [NodeType.INITIAL]: manualTriggerExecutor,
+  [NodeType.MANUAL_TRIGGER]: manualTriggerExecutor,
+  [NodeType.HTTP_REQUEST]: httpRequestExecutor,
+  [NodeType.GOOGLE_FORM_TRIGGER]: googleFormTriggerExecutor,
+  [NodeType.STRIPE_TRIGGER]: stripeTriggerExecutor,
+  [NodeType.GEMINI]: geminiExecutor,
+  [NodeType.ANTHROPIC]: AnthropicExecutor,
+  [NodeType.OPENAI]: openAiExecutor,
+  [NodeType.GROQ]: GroqExecutor,
+};
 
 export const getExecutor = (type: NodeType): NodeExecutor => {
-  const executor = executorRegistry.get(type);
+  const executor = executorRegistry[type];
   if (!executor) {
     throw new Error(`No executor found for node type ${type}`);
   }

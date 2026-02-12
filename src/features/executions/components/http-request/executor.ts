@@ -11,9 +11,9 @@ Handlebars.registerHelper("json", (context) => {
 });
 
 type HttpRequestData = {
-  variablesName: string;
-  endpoint: string;
-  method: "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
+  variablesName?: string;
+  endpoint?: string;
+  method?: "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
   body?: string;
 };
 
@@ -30,36 +30,36 @@ export const httpRequestExecutor: NodeExecutor<HttpRequestData> = async ({
       status: "loading",
     }),
   );
-  if (!data.endpoint) {
-    await publish(
-      httpRequestChannel().status({
-        nodeId,
-        status: "error",
-      }),
-    );
-    throw new NonRetriableError("Http Request node is not configured");
-  }
-  if (!data.variablesName) {
-    await publish(
-      httpRequestChannel().status({
-        nodeId,
-        status: "error",
-      }),
-    );
-    throw new NonRetriableError("Variable Name is not configured");
-  }
-  if (!data.method) {
-    await publish(
-      httpRequestChannel().status({
-        nodeId,
-        status: "error",
-      }),
-    );
-    throw new NonRetriableError("Method is not configured");
-  }
 
   try {
     const result = await step.run("http-request", async () => {
+      if (!data.endpoint) {
+        await publish(
+          httpRequestChannel().status({
+            nodeId,
+            status: "error",
+          }),
+        );
+        throw new NonRetriableError("Http Request node is not configured");
+      }
+      if (!data.variablesName) {
+        await publish(
+          httpRequestChannel().status({
+            nodeId,
+            status: "error",
+          }),
+        );
+        throw new NonRetriableError("Variable Name is not configured");
+      }
+      if (!data.method) {
+        await publish(
+          httpRequestChannel().status({
+            nodeId,
+            status: "error",
+          }),
+        );
+        throw new NonRetriableError("Method is not configured");
+      }
       const endpoint = Handlebars.compile(data.endpoint)(context);
       const method = data.method;
 

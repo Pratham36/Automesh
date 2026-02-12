@@ -1,39 +1,42 @@
 "use client";
 
 import { Node, NodeProps, useReactFlow } from "@xyflow/react";
-import { GlobeIcon } from "lucide-react";
 import { memo, useState } from "react";
 import { BaseExecutionNode } from "../base-execution-node";
-import { HttpRequestFormValues, HttpRequestDialog } from "./dialog";
 import { useNodeStatus } from "../../hooks/use-node-status";
-import { fetchHttpRequestRealtimeToken } from "./action";
-import { HTTP_REQUEST_CHANNEL_NAME } from "@/inngest/channels/https-request";
+import { GroqDialog, GroqFormValues } from "./dialog";
+import { fetchGroqRealtimeToken } from "./action";
+import { AVAILABLE_GROQ } from "../avaliableModel";
+import { GROQ_CHANNEL_NAME } from "@/inngest/channels/qroq";
 
-type HttpRequestNodeData = {
+type groqModel = (typeof AVAILABLE_GROQ)[number];
+
+type groqNodeData = {
   variablesName?: string;
-  endpoint?: string;
-  method?: "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
-  body?: string;
+  credentialId?: string;
+  model?: groqModel;
+  systemPrompt?: string;
+  userPrompt?: string;
 };
 
-type HttpRequestNodeType = Node<HttpRequestNodeData>;
+type GroqNodeType = Node<groqNodeData>;
 
-export const HttpRequestNode = memo((props: NodeProps<HttpRequestNodeType>) => {
+export const GroqNode = memo((props: NodeProps<GroqNodeType>) => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const { setNodes } = useReactFlow();
 
   const nodeStatus = useNodeStatus({
     nodeId: props.id,
-    channel: HTTP_REQUEST_CHANNEL_NAME,
+    channel: GROQ_CHANNEL_NAME,
     topic: "status",
-    refreshToken: fetchHttpRequestRealtimeToken,
+    refreshToken: fetchGroqRealtimeToken,
   });
 
   const handleOpenSettings = () => {
     setDialogOpen(true);
   };
 
-  const handleSubmit = (value: HttpRequestFormValues) => {
+  const handleSubmit = (value: GroqFormValues) => {
     setNodes((nodes) =>
       nodes.map((node) => {
         if (node.id === props.id) {
@@ -51,13 +54,13 @@ export const HttpRequestNode = memo((props: NodeProps<HttpRequestNodeType>) => {
   };
 
   const nodeData = props.data;
-  const description = nodeData?.endpoint
-    ? `${nodeData.method || "GET"} ${nodeData.endpoint}`
+  const description = nodeData?.userPrompt
+    ? `${nodeData.model || AVAILABLE_GROQ[0]} ${nodeData.userPrompt.slice(0, 50)}...`
     : "Not configured";
 
   return (
     <>
-      <HttpRequestDialog
+      <GroqDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         onSubmit={handleSubmit}
@@ -66,8 +69,8 @@ export const HttpRequestNode = memo((props: NodeProps<HttpRequestNodeType>) => {
       <BaseExecutionNode
         {...props}
         id={props.id}
-        icon={GlobeIcon}
-        name="HTTP Request"
+        icon="/groq.svg"
+        name="Groq"
         status={nodeStatus}
         description={description}
         onSettings={handleOpenSettings}
@@ -77,4 +80,4 @@ export const HttpRequestNode = memo((props: NodeProps<HttpRequestNodeType>) => {
   );
 });
 
-HttpRequestNode.displayName = "HttpRequestNode";
+GroqNode.displayName = "GroqNode";

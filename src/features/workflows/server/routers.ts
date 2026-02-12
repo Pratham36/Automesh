@@ -63,7 +63,7 @@ export const workflowsRouter = createTRPCRouter({
         nodes: z.array(
           z.object({
             id: z.string(),
-            type: z.string().nullish(),
+            type: z.nativeEnum(NodeType), // ✅ strict enum validation
             position: z.object({
               x: z.number(),
               y: z.number(),
@@ -91,65 +91,22 @@ export const workflowsRouter = createTRPCRouter({
         },
       });
 
-      // Transcation to ensure consistency
       return prisma.$transaction(async (tx) => {
-        // Delete existing nodes and edges
         await tx.node.deleteMany({
-          where: {
-            workflowId: id,
-          },
+          where: { workflowId: id },
         });
 
-        /**
-         * DEFAULT_NODE_NAMES
-         * ------------------
-         * Maps each NodeType to a human-readable default label.
-         *
-         * Purpose:
-         * - Avoid using technical IDs as node names
-         * - Provide meaningful labels on initial creation
-         * - Act as a safe fallback when user-defined names are missing
-         *
-         * IMPORTANT:
-         * - This is NOT the source of truth
-         * - Actual node names should come from DB / node.data.name
-         * - This is used ONLY as a fallback
-         */
-        const DEFAULT_NODE_NAMES: Record<NodeType, string> = {
-          INITIAL: "Start",
-          MANUAL_TRIGGER: "MANUAL_TRIGGER",
-          HTTP_REQUEST: "HTTP_REQUEST",
-          GOOGLE_FORM_TRIGGER: "GOOGLE_FORM_TRIGGER",
-        };
-
-        /**
-         * getDefaultNodeName
-         * ------------------
-         * Returns a default, human-readable node name based on node type.
-         *
-         * Used when:
-         * - Creating a new node
-         * - Restoring nodes from client state
-         * - node.data.name is missing or undefined
-         *
-         * Guarantees:
-         * - Never returns undefined
-         * - Prevents raw IDs from leaking into UI or DB
-         */
-        const getDefaultNodeName = (type?: string | null) =>
-          DEFAULT_NODE_NAMES[type as NodeType] ?? "Node";
-        // Create new nodes and edges
         await tx.node.createMany({
           data: nodes.map((node) => ({
             id: node.id,
             workflowId: id,
-            name: DEFAULT_NODE_NAMES[node.type as NodeType],
-            type: node.type as NodeType,
+            name: node.data?.name || node.type,
+            type: node.type, // ✅ no casting
             position: node.position,
             data: node.data || {},
           })),
         });
-        // create connections
+
         await tx.connection.createMany({
           data: edges.map((edge) => ({
             workflowId: id,
@@ -160,15 +117,11 @@ export const workflowsRouter = createTRPCRouter({
           })),
         });
 
-        // Update workflow's updateAt timestamp
         await tx.workflow.update({
-          where: {
-            id,
-          },
-          data: {
-            updatedAt: new Date(),
-          },
+          where: { id },
+          data: { updatedAt: new Date() },
         });
+
         return workflow;
       });
     }),

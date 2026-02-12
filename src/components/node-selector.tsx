@@ -37,6 +37,12 @@ const triggerNode: NodeTypeOption[] = [
     description: "Run the flow when a google form is submitted",
     icon: "/googleform.svg",
   },
+  {
+    type: NodeType.STRIPE_TRIGGER,
+    label: "Stripe Event",
+    description: "Run the flow when a Stripe Event is captured",
+    icon: "/stripe.svg",
+  },
 ];
 
 const executionNodes: NodeTypeOption[] = [
@@ -45,6 +51,30 @@ const executionNodes: NodeTypeOption[] = [
     label: "HTTP Request",
     description: "Make a HTTP request",
     icon: GlobeIcon,
+  },
+  {
+    type: NodeType.GEMINI,
+    label: "Gemini",
+    description: "Use Gemini to generate content",
+    icon: "/gemini.svg",
+  },
+  {
+    type: NodeType.OPENAI,
+    label: "OpenAi",
+    description: "Use OpenAi to generate content",
+    icon: "/openai.svg",
+  },
+  {
+    type: NodeType.ANTHROPIC,
+    label: "Anthropic",
+    description: "Use Anthropic to generate content",
+    icon: "/anthropic.svg",
+  },
+  {
+    type: NodeType.GROQ,
+    label: "Groq",
+    description: "Use Groq to generate content",
+    icon: "/groq.svg",
   },
 ];
 
