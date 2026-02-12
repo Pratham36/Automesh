@@ -7,6 +7,11 @@ import { getExecutor } from "@/features/lib/executor-registry";
 import { httpRequestChannel } from "./channels/https-request";
 import { manualTriggerChannel } from "./channels/maual.trigger";
 import { googleFormTriggerChannel } from "./channels/google-form-trigger";
+import { stripeTriggerChannel } from "./channels/stripe-trigger";
+import { geminiChannel } from "./channels/gemini";
+import { openAiChannel } from "./channels/openai";
+import { anthropicChannel } from "./channels/anthropic";
+import { groqChannel } from "./channels/qroq";
 
 export const executeWorkflow = inngest.createFunction(
   {
@@ -19,6 +24,11 @@ export const executeWorkflow = inngest.createFunction(
       httpRequestChannel(),
       manualTriggerChannel(),
       googleFormTriggerChannel(),
+      stripeTriggerChannel(),
+      geminiChannel(),
+      openAiChannel(),
+      anthropicChannel(),
+      groqChannel(),
     ],
   },
   async ({ event, step, publish }) => {
@@ -41,7 +51,7 @@ export const executeWorkflow = inngest.createFunction(
       return topologicalSort(workflow.nodes, workflow.connection);
     });
     //Initialize the context
-    let context = event.data.initialContext || {};
+    let context = event.data.initialData || {};
 
     for (const node of sortedNode) {
       try {

@@ -102,10 +102,10 @@
 ========================= */
 .dark {
   /* Core surfaces */
-  --background: oklch(0.18 0.02 260);      /* #0B0F1A */
+  --background: oklch(0.18 0.02 260); /* #0B0F1A */
   --foreground: oklch(0.92 0 0);
 
-  --card: oklch(0.22 0.025 262);           /* #12182B */
+  --card: oklch(0.22 0.025 262); /* #12182B */
   --card-foreground: oklch(0.92 0 0);
 
   --popover: oklch(0.21 0.025 262);
@@ -141,18 +141,18 @@
   /* Charts */
   --chart-1: oklch(0.72 0.12 260);
   --chart-2: oklch(0.78 0.14 220);
-  --chart-3: oklch(0.62 0.10 280);
+  --chart-3: oklch(0.62 0.1 280);
   --chart-4: oklch(0.58 0.12 200);
-  --chart-5: oklch(0.50 0.14 320);
+  --chart-5: oklch(0.5 0.14 320);
 
   /* Sidebar */
-  --sidebar: oklch(0.20 0.02 262);
+  --sidebar: oklch(0.2 0.02 262);
   --sidebar-foreground: oklch(0.92 0 0);
   --sidebar-primary: oklch(0.63 0.18 264);
   --sidebar-primary-foreground: oklch(0.98 0 0);
   --sidebar-accent: oklch(0.35 0.06 255);
   --sidebar-accent-foreground: oklch(0.92 0 0);
-  --sidebar-border: oklch(0.30 0.02 260);
+  --sidebar-border: oklch(0.3 0.02 260);
   --sidebar-ring: oklch(0.72 0.16 264);
 }
 
@@ -195,4 +195,7 @@
     oklch(0.63 0.18 264),
     oklch(0.72 0.16 230)
   );
+}
+.react-flow__node.selected #base-node {
+  @apply ring-3 ring-muted-foreground/25 shadow-lg;
 }
