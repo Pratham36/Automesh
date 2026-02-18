@@ -8,6 +8,8 @@ import { geminiExecutor } from "../executions/components/gemini/executor";
 import { openAiExecutor } from "../executions/components/openai/executor";
 import { AnthropicExecutor } from "../executions/components/anthropic/executor";
 import { GroqExecutor } from "../executions/components/groq/executor";
+import { discordExecutor } from "../executions/components/discord/executor";
+import { slackExecutor } from "../executions/components/slack/executor";
 
 // Create a proper type-safe registry with type assertions
 export const executorRegistry: Record<NodeType, NodeExecutor> = {
@@ -20,6 +22,8 @@ export const executorRegistry: Record<NodeType, NodeExecutor> = {
   [NodeType.ANTHROPIC]: AnthropicExecutor,
   [NodeType.OPENAI]: openAiExecutor,
   [NodeType.GROQ]: GroqExecutor,
+  [NodeType.DISCORD]: discordExecutor,
+  [NodeType.SLACK]: slackExecutor,
 };
 
 export const getExecutor = (type: NodeType): NodeExecutor => {
