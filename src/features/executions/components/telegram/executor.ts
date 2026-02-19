@@ -2,7 +2,7 @@ import Handlebars from "handlebars";
 import { decode } from "html-entities";
 import { NodeExecutor } from "@/features/executions/types";
 import { NonRetriableError } from "inngest";
-import { slackChannel } from "@/inngest/channels/slack";
+import { telegramChannel } from "@/inngest/channels/telegram";
 import ky from "ky";
 
 Handlebars.registerHelper("json", (context) => {
@@ -11,13 +11,14 @@ Handlebars.registerHelper("json", (context) => {
   return safeString;
 });
 
-type SlackData = {
+type TelegramData = {
   variablesName?: string;
-  webhookUrl?: string;
+  botToken?: string;
+  chatId?: string;
   content?: string;
 };
 
-export const slackExecutor: NodeExecutor<SlackData> = async ({
+export const telegramExecutor: NodeExecutor<TelegramData> = async ({
   data,
   nodeId,
   context,
@@ -25,7 +26,7 @@ export const slackExecutor: NodeExecutor<SlackData> = async ({
   publish,
 }) => {
   await publish(
-    slackChannel().status({
+    telegramChannel().status({
       nodeId,
       status: "loading",
     }),
@@ -33,51 +34,65 @@ export const slackExecutor: NodeExecutor<SlackData> = async ({
 
   if (!data.content) {
     await publish(
-      slackChannel().status({
+      telegramChannel().status({
         nodeId,
         status: "error",
       }),
     );
-    throw new NonRetriableError("Slack node: Message content is missing");
+    throw new NonRetriableError("Telegram node: Message content is missing");
   }
   const rawContent = Handlebars.compile(data.content)(context);
   const content = decode(rawContent);
 
   try {
-    const result = await step.run("slack-webhook", async () => {
-      if (!data.webhookUrl) {
+    const result = await step.run("telegram-webhook", async () => {
+      if (!data.botToken) {
         await publish(
-          slackChannel().status({
+          telegramChannel().status({
             nodeId,
             status: "error",
           }),
         );
-        throw new NonRetriableError("Slack node: webhook URL is missing");
+        throw new NonRetriableError("Telegram node: Bot token is missing");
       }
-      await ky.post(data.webhookUrl, {
+      if (!data.chatId) {
+        await publish(
+          telegramChannel().status({
+            nodeId,
+            status: "error",
+          }),
+        );
+        throw new NonRetriableError("Telegram node: Chat ID is missing");
+      }
+
+      const telegramUrl = `https://api.telegram.org/bot${data.botToken}/sendMessage`;
+      
+      await ky.post(telegramUrl, {
         json: {
-          text: content,
+          chat_id: data.chatId,
+          text: content.slice(0, 4096),
+          parse_mode: "HTML",
         },
       });
 
       if (!data.variablesName) {
         await publish(
-          slackChannel().status({
+          telegramChannel().status({
             nodeId,
             status: "error",
           }),
         );
-        throw new NonRetriableError("Slack node: Variables name is missing");
+        throw new NonRetriableError("Telegram node: Variables name is missing");
       }
       return {
         ...context,
         [data.variablesName]: {
-          messageContent: content.slice(0, 2000),
+          messageContent: content.slice(0, 4096),
         },
       };
     });
     await publish(
-      slackChannel().status({
+      telegramChannel().status({
         nodeId,
         status: "success",
       }),
@@ -85,7 +100,7 @@ export const slackExecutor: NodeExecutor<SlackData> = async ({
     return result;
   } catch (error) {
     await publish(
-      slackChannel().status({
+      telegramChannel().status({
         nodeId,
         status: "error",
       }),

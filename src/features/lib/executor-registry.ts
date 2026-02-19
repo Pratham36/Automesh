@@ -10,6 +10,7 @@ import { AnthropicExecutor } from "../executions/components/anthropic/executor";
 import { GroqExecutor } from "../executions/components/groq/executor";
 import { discordExecutor } from "../executions/components/discord/executor";
 import { slackExecutor } from "../executions/components/slack/executor";
+import { telegramExecutor } from "../executions/components/telegram/executor";
 
 // Create a proper type-safe registry with type assertions
 export const executorRegistry: Record<NodeType, NodeExecutor> = {
@@ -24,6 +25,7 @@ export const executorRegistry: Record<NodeType, NodeExecutor> = {
   [NodeType.GROQ]: GroqExecutor,
   [NodeType.DISCORD]: discordExecutor,
   [NodeType.SLACK]: slackExecutor,
+  [NodeType.TELEGRAM]: telegramExecutor,
 };
 
 export const getExecutor = (type: NodeType): NodeExecutor => {

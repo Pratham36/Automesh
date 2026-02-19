@@ -50,6 +50,37 @@ export function RegisterForm() {
       confirmPassword: "",
     },
   });
+  const signInGithub = async () => {
+    await authClient.signIn.social(
+      {
+        provider: "github",
+      },
+      {
+        onSuccess: () => {
+          router.push("/");
+        },
+        onError: () => {
+          toast.error("Failed to sign in with GitHub");
+        },
+      },
+    );
+  };
+
+  const signInGoogle = async () => {
+    await authClient.signIn.social(
+      {
+        provider: "google",
+      },
+      {
+        onSuccess: () => {
+          router.push("/");
+        },
+        onError: () => {
+          toast.error("Failed to sign in with Google");
+        },
+      },
+    );
+  };
 
   const onSubmit = async (values: RegisterFormValues) => {
     await authClient.signUp.email(
@@ -65,9 +96,9 @@ export function RegisterForm() {
         },
         onError: (ctx) => {
           toast.error(ctx.error.message);
-        }
-      }
-    )
+        },
+      },
+    );
   };
 
   const isPending = form.formState.isSubmitting;
@@ -85,21 +116,33 @@ export function RegisterForm() {
               <div className="grid gap-6">
                 <div className="flex flex-col gap-4">
                   <Button
+                    onSubmit={signInGithub}
                     variant="outline"
                     className="w-full"
                     type="button"
                     disabled={isPending}
                   >
-                    <Image alt="Github" src="/github.svg" width={20} height={20}/>
+                    <Image
+                      alt="Github"
+                      src="/github.svg"
+                      width={20}
+                      height={20}
+                    />
                     continue with GitHub
                   </Button>
                   <Button
+                    onSubmit={signInGoogle}
                     variant="outline"
                     className="w-full"
                     type="button"
                     disabled={isPending}
                   >
-                  <Image alt="Google" src="/google.svg" width={20} height={20}/> 
+                    <Image
+                      alt="Google"
+                      src="/google.svg"
+                      width={20}
+                      height={20}
+                    />
                     continue with Google
                   </Button>
                 </div>
