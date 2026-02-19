@@ -33,20 +33,24 @@ const formSchema = z.object({
       message:
         "Variable name must start with a letter or underscore and can only contain letters, numbers, and underscores.",
     }),
-  content: z.string().min(1, "Content is required"),
-  webhookUrl: z.string().min(1, "Webhook is required"),
+  content: z
+    .string()
+    .min(1, "Content is required")
+    .max(4096, "Content must be less than 4096 characters"),
+  botToken: z.string().min(1, "Bot token is required"),
+  chatId: z.string().min(1, "Chat ID is required"),
 });
 
-export type SlackFormValues = z.infer<typeof formSchema>;
+export type TelegramFormValues = z.infer<typeof formSchema>;
 
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit: (values: z.infer<typeof formSchema>) => void;
-  defaultValues?: Partial<SlackFormValues>;
+  defaultValues?: Partial<TelegramFormValues>;
 }
 
-export const SlackDialog = ({
+export const TelegramDialog = ({
   open,
   onOpenChange,
   onSubmit,
@@ -57,7 +61,8 @@ export const SlackDialog = ({
     defaultValues: {
       variablesName: defaultValues.variablesName || "",
       content: defaultValues.content || "",
-      webhookUrl: defaultValues.webhookUrl || "",
+      botToken: defaultValues.botToken || "",
+      chatId: defaultValues.chatId || "",
     },
   });
 
@@ -67,7 +72,8 @@ export const SlackDialog = ({
       form.reset({
         variablesName: defaultValues.variablesName || "",
         content: defaultValues.content || "",
-        webhookUrl: defaultValues.webhookUrl || "",
+        botToken: defaultValues.botToken || "",
+        chatId: defaultValues.chatId || "",
       });
     }
   }, [open, defaultValues, form]);
@@ -83,8 +89,8 @@ export const SlackDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle> Slack </DialogTitle>
-          <DialogDescription>Configure setting for Slack</DialogDescription>
+          <DialogTitle> Telegram </DialogTitle>
+          <DialogDescription>Configure settings for Telegram</DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
@@ -111,59 +117,49 @@ export const SlackDialog = ({
             />
             <FormField
               control={form.control}
-              name="webhookUrl"
+              name="botToken"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel> Webhook URL </FormLabel>
+                  <FormLabel> Bot Token </FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="https://slack.com/api/webhooks/..."
+                      placeholder="1234567890:ABCdefGHIjklMNOpqrsTUVwxyz"
                       {...field}
                     />
                   </FormControl>
                   <FormDescription>
-                    Get this from Slack : Workspace Settings → Workflow →
-                    Webhooks
+                    Get this from BotFather on Telegram. Create a bot and copy its token.
                   </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="chatId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel> Chat ID </FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="-1001234567890 or @channelusername"
+                      {...field}
+                    />
+                  </FormControl>
                   <FormDescription>
-                    Make sure the "key" is "text"
+                    The chat ID where messages should be sent. Can be a private chat, group, or channel.
                   </FormDescription>
                   <FormDescription>
                     <ol className="list-decimal pl-6 leading-relaxed">
                       <li>
-                        Go to <strong>Slack API</strong> → click{" "}
-                        <strong>Create New App</strong> → choose{" "}
-                        <strong>From scratch</strong>.
+                        To get your chat ID, send a message to <strong>@userinfobot</strong> on Telegram.
                       </li>
-
                       <li>
-                        Enter your <strong>App Name</strong> and select your{" "}
-                        <strong>Workspace</strong>, then click{" "}
-                        <strong>Create</strong>.
+                        For channels, use the channel username (e.g., @yourchannel) or the numeric ID.
                       </li>
-
                       <li>
-                        In the sidebar, open <strong>Features</strong> →{" "}
-                        <strong>Incoming Webhooks</strong>.
-                      </li>
-
-                      <li>
-                        Turn <strong>Activate Incoming Webhooks</strong> to{" "}
-                        <strong>ON</strong>.
-                      </li>
-
-                      <li>
-                        Click <strong>Add New Webhook to Workspace</strong>.
-                      </li>
-
-                      <li>
-                        Select the <strong>Channel</strong> where messages
-                        should be posted, then click <strong>Allow</strong>.
-                      </li>
-
-                      <li>
-                        Copy the generated <strong>Webhook URL</strong> and use
-                        it in your <strong>Application Workflow</strong>.
+                        For groups, use the numeric group ID (usually starts with -100).
                       </li>
                     </ol>
                   </FormDescription>
@@ -186,7 +182,7 @@ export const SlackDialog = ({
                     />
                   </FormControl>
                   <FormDescription>
-                    The message to send. Uer{"{{variables}}"} for simple values
+                    The message to send. Use{"{{variables}}"} for simple values
                     or {"{{json variable}}"} to stringify JSON objects.
                   </FormDescription>
                   <FormMessage />

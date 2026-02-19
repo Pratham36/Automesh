@@ -44,17 +44,51 @@ export function LoginForm() {
     },
   });
 
+  const signInGithub = async () => {
+    await authClient.signIn.social(
+      {
+        provider: "github",
+      },
+      {
+        onSuccess: () => {
+          router.push("/");
+        },
+        onError: () => {
+          toast.error("Failed to sign in with GitHub");
+        },
+      },
+    );
+  };
+
+  const signInGoogle = async () => {
+    await authClient.signIn.social(
+      {
+        provider: "google",
+      },
+      {
+        onSuccess: () => {
+          router.push("/");
+        },
+        onError: () => {
+          toast.error("Failed to sign in with Google");
+        },
+      },
+    );
+  };
+
   const onSubmit = async (values: LoginFormValues) => {
-    await authClient.signIn.email({
-      email : values.email,
-      password : values.password,
-      callbackURL : "/"
-    },
-    {
-      onError:(ctx) => {
-        toast.error(ctx.error.message)
-      }
-    });
+    await authClient.signIn.email(
+      {
+        email: values.email,
+        password: values.password,
+        callbackURL: "/",
+      },
+      {
+        onError: (ctx) => {
+          toast.error(ctx.error.message);
+        },
+      },
+    );
   };
 
   const isPending = form.formState.isSubmitting;
@@ -72,21 +106,33 @@ export function LoginForm() {
               <div className="grid gap-6">
                 <div className="flex flex-col gap-4">
                   <Button
+                    onClick={signInGithub}
                     variant="outline"
                     className="w-full"
                     type="button"
                     disabled={isPending}
                   >
-                    <Image alt="Github" src="/github.svg" width={20} height={20}/>
+                    <Image
+                      alt="Github"
+                      src="/github.svg"
+                      width={20}
+                      height={20}
+                    />
                     continue with GitHub
                   </Button>
                   <Button
+                    onClick={signInGoogle}
                     variant="outline"
                     className="w-full"
                     type="button"
                     disabled={isPending}
                   >
-                    <Image alt="Google" src="/google.svg" width={20} height={20}/>
+                    <Image
+                      alt="Google"
+                      src="/google.svg"
+                      width={20}
+                      height={20}
+                    />
                     continue with Google
                   </Button>
                 </div>
@@ -133,7 +179,9 @@ export function LoginForm() {
               </div>
               <div className="text-center text-sm">
                 Don't have an account?{" "}
-                <Link href="/signup" className ="underline underline-offset-4">Sign up</Link>
+                <Link href="/signup" className="underline underline-offset-4">
+                  Sign up
+                </Link>
               </div>
             </form>
           </Form>

@@ -6,6 +6,7 @@ import { generateText } from "ai";
 import { AVAILABLE_GROQ } from "../avaliableModel";
 import { groqChannel } from "@/inngest/channels/qroq";
 import prisma from "@/lib/db";
+import { decrypt } from "@/lib/encryption";
 
 Handlebars.registerHelper("json", (context) => {
   const jsonString = JSON.stringify(context, null, 2);
@@ -92,7 +93,7 @@ export const GroqExecutor: NodeExecutor<GroqData> = async ({
   }
 
   const groq = createGroq({
-    apiKey: credential.value,
+    apiKey: decrypt(credential.value),
   });
 
   try {
